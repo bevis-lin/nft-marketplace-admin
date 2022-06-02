@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+
+{% block head %}
+<title>Unsold Listings</title>
+{% endblock %}
+
+{% block body %}
+<div class="content">
+  <h1 style="text-align: center">Unsold Listings</h1>
+  {% if listings|length < 1 %}
+    <h4 style="text-align: center">There are no listings.</h4>
+    {% else %}
+    {% for listing in listings %}
+      <p>ListingId:{{ listing.listingId }},TokenId:{{ listing.tokenId }},Price:{{ listing.price }}, Type: {{ listing.listingType }}</p>
+    {% endfor %}
+  {% endif %}  
+</div>
+{% endblock %}
