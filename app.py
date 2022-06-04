@@ -1,4 +1,5 @@
 from code import interact
+from crypt import methods
 from distutils.command.config import config
 from email.policy import default
 from flask import Flask, render_template, url_for, request, redirect, jsonify
@@ -20,6 +21,17 @@ class Todo(db.Model):
   def __repr__(self) -> str:
     return '<Task %r>' % self.id
 
+class Payment(db.Model):
+  id = db.Column(db.Integer, primary_key=True)
+  contract_address = db.Column(db.String(100), nullable=True)
+  payment_address1 = db.Column(db.String(100), nullable=False)
+  payment_address2 = db.Column(db.String(100), nullable=True)
+  share1 = db.Column(db.Integer, nullable=False)
+  share2 = db.Column(db.Integer, nullable=True)
+  date_created = db.Column(db.DateTime, default=datetime.utcnow)
+
+  def __repr__(self) -> str:
+    return '<Payment %r>' % self.id
 
 @app.route('/', methods=['GET','POST'])
 def index():
@@ -103,7 +115,33 @@ def getTransactionReceipt(txHash):
     return jsonify({
       "status": "failed",
       "data": None
-    }) 
+    })
+  
+@app.route('/payment', methods=['GET','POST'])
+def payment():
+  if request.method == 'POST':
+    title = request.form['title']
+    address1 = request.form['address1']
+    address2 = request.form['address2']
+    share1 = request.form['share1']
+    share2 = request.form['share2']
+
+    contractAddress = web3Interact.createPayment(title,[address1,address2], [int(share1),int(share2)])
+
+    new_payment = Payment(title=title, contract_address=contractAddress, payment_address1=address1, \
+      payment_address2=address2, share1=share1, share2=share2)
+
+    try:
+      db.session.add(new_payment)
+      db.session.commit()
+      return redirect('/payment')
+    except:
+      return 'There was in issue adding your payment'
+    return contractAddress
+  else:
+    payments = Payment.query.order_by(Payment.date_created).all()
+    return render_template('payment.html', payments = payments)
+
 
 if __name__== "__main__":
   app.run(debug=True)
