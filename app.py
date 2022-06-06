@@ -10,7 +10,9 @@ import json
 import logging
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///test.db'
+#app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///test.db'
+#mysql+mysqlconnector://<user>:<password>@<host>[:<port>]/<dbname>
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://root:saxovts@localhost:3306/emperor'
 db = SQLAlchemy(app)
 
 class Todo(db.Model):
@@ -23,6 +25,7 @@ class Todo(db.Model):
 
 class Payment(db.Model):
   id = db.Column(db.Integer, primary_key=True)
+  title = db.Column(db.String(100), nullable=False)
   contract_address = db.Column(db.String(100), nullable=True)
   payment_address1 = db.Column(db.String(100), nullable=False)
   payment_address2 = db.Column(db.String(100), nullable=True)
@@ -135,12 +138,20 @@ def payment():
       db.session.add(new_payment)
       db.session.commit()
       return redirect('/payment')
-    except:
+    except Exception as e:
+      app.logger.info(e)
       return 'There was in issue adding your payment'
-    return contractAddress
   else:
-    payments = Payment.query.order_by(Payment.date_created).all()
-    return render_template('payment.html', payments = payments)
+    payments = Payment.query.order_by(Payment.date_created).all() 
+    wrappedPayments = []
+    for payment in payments:
+      balanceTemp = web3Interact.getBalanceOfAddress(payment.contract_address)
+      wrappedPayment = {}
+      wrappedPayment['payment'] = payment
+      wrappedPayment['balance'] = balanceTemp
+      wrappedPayments.append(wrappedPayment)
+
+    return render_template('payment.html', wrappedPayments = wrappedPayments)
 
 
 if __name__== "__main__":

@@ -160,7 +160,17 @@ def createPayment(title, paymentAddresses, shares):
     tx_receipt = w3.eth.wait_for_transaction_receipt(tx_hash)
 
     return tx_receipt.contractAddress
-    
+  
   except Exception as e:
     print(e, file=sys.stderr)
     raise e
+
+def getPaymentByAddress(address):
+  f = open('./abi/payment-abi.json')
+  abi = json.load(f)
+  f.close()
+  paymentInstance = w3.eth.contract(address=address,abi=abi)
+  return paymentInstance
+
+def getBalanceOfAddress(address):
+  return w3.fromWei(w3.eth.getBalance(address), 'ether')
