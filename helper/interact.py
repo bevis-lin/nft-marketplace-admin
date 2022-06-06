@@ -6,6 +6,8 @@ import json
 import config as config
 import sys
 from solcx import compile_files
+import requests
+from model.NFT import NFT
 
 w3 = Web3(Web3.HTTPProvider(config.web3HttpProvider))
 w3.middleware_onion.inject(geth_poa_middleware, layer=0)
@@ -70,7 +72,8 @@ def purchaseListing(id):
     #print(listing, file=sys.stdout)
     print("Transfer to ", config.nftKeeperAddress)
 
-    marketplace_txn = marketplaceContract_instance.functions.purchase(id,config.nftKeeperAddress).buildTransaction({
+    marketplace_txn = marketplaceContract_instance.functions.purchase(id,\
+      config.nftKeeperAddress).buildTransaction({
       'chainId': 80001,
       'gas': 10000000,
       'maxFeePerGas': w3.toWei('2', 'gwei'),
@@ -147,7 +150,6 @@ def createPayment(title, paymentAddresses, shares):
 
     
     Payment = w3.eth.contract(abi=abi, bytecode=bytecode)
-    #payment_txn = Payment.constructor(title,["0x894bc29A4B7A2Bb481F4467dcccEdc1946Ff6276","0xA6986CF3761CCF6Dc044f954c34B669Aa7CE52c5"],[50,50]).buildTransaction(
     payment_txn = Payment.constructor(title,paymentAddresses,shares).buildTransaction(
       {
         'from': contract_owner_address,
@@ -210,7 +212,8 @@ def createListing(tokenId, price, paymentSplitterAddress):
     nonce = w3.eth.get_transaction_count(contract_owner_address)
     priceWei = w3.toWei(price, 'ether')
    
-    marketplace_txn = marketplaceContract_instance.functions.createPrimaryListing(int(tokenId),priceWei,paymentSplitterAddress).buildTransaction({
+    marketplace_txn = marketplaceContract_instance.functions.createPrimaryListing(\
+      int(tokenId),priceWei,paymentSplitterAddress).buildTransaction({
       'chainId': 80001,
       'gas': 10000000,
       'maxFeePerGas': w3.toWei('2', 'gwei'),
@@ -239,3 +242,25 @@ def createListing(tokenId, price, paymentSplitterAddress):
 
 def getBalanceOfAddress(address):
   return w3.fromWei(w3.eth.getBalance(address), 'ether')
+
+def getAdminOwnedNFTs():
+  urlGet = config.web3HttpProvider + '/getNFTs/?owner='+config.contractOwnerAddress+\
+    '&contractAddresses[]='+ config.emperorContractAddress
+  print(urlGet, file=sys.stdout)
+  contentResult = json.loads(requests.get(urlGet).content)
+  print(contentResult, file=sys.stdout)
+  
+  nftsReturn = []
+  for nftTemp in contentResult['ownedNfts']:
+    nft = NFT(int(nftTemp['id']['tokenId'],16),nftTemp['metadata']['name'],nftTemp['metadata']['image'].replace('gateway.pinata.cloud',\
+      'ipfs.digi96.com'),nftTemp['metadata']['description'])
+    nftsReturn.append(nft)
+  
+  print(nftsReturn, file=sys.stdout)
+  return nftsReturn
+
+def getNFTByTokenId(tokenId):
+  #get tokenUri
+  #get metadata from pinata
+  nft = NFT(1,'test', 'http://wwww.com/1.jpg','test')
+  return nft

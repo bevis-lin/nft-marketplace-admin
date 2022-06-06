@@ -197,9 +197,16 @@ def releasePayment():
         "data": None
       })
 
+@app.route('/collection', methods=['GET'])
+def displayAdminOwnedNFTs():
+  nfts = web3Interact.getAdminOwnedNFTs()
+  
+  return render_template('collection.html', nfts = nfts)
 
-
-
+@app.route('/nft/<int:tokenId>', methods=['GET'])
+def displayNFT(tokenId):
+  nft = web3Interact.getNFTByTokenId(tokenId)
+  return render_template('nft.html', nft = nft)
 
 
 if __name__== "__main__":

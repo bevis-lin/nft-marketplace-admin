@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+
+{% block head %}
+<title>Collection</title>
+{% endblock %}
+
+{% block body %}
+<div class="content">
+  <h1 style="text-align: center">Collection</h1>
+  {% if nfts|length < 1 %}
+    <h4 style="text-align: center">There are no NFT in collection.</h4>
+    {% else %}
+    {% for nft in nfts %}
+      <div>
+        <p>TokenId: {{ nft.tokenId }}</p>
+        <p>Name:{{ nft.name }}</p>
+        <p><img src="{{ nft.imageUrl }}" width="50%" height="50%"></p>
+        <p>Description:{{ nft.description }}</p>
+        <a href="/nft/{{ nft.tokenId }}">More</a>
+      </div>
+      <hr>
+    {% endfor %}
+  {% endif %}  
+</div>
+{% endblock %}
