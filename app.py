@@ -76,11 +76,31 @@ def update(id):
   else:
     return render_template('update.html', task=task)
 
-@app.route('/listings', methods=['GET'])
+@app.route('/listings', methods=['GET','POST'])
 def listings():
-  listings = web3Interact.getListings()
-  app.logger.info(listings)
-  return render_template('listings.html', listings=listings)
+  if request.method == 'GET':
+    listings = web3Interact.getListings()
+    app.logger.info(listings)
+    return render_template('listings.html', listings=listings)
+  else:
+    tokenId = request.form['tokenId']
+    price = request.form['price']
+    paymentSplitterAddress = request.form['paymentSplitterAddress']
+    try:
+      receipt = web3Interact.createListing(tokenId, price, paymentSplitterAddress)
+      if receipt is not None:
+        return jsonify({"status": "ok","data": receipt})
+      else:
+        return jsonify({
+          "status": "failed",
+          "data": None
+        })
+    except Exception as e:
+      return jsonify({
+          "status": "failed",
+          "data": None,
+          "message": str(e)
+        })
 
 @app.route('/listings/<int:listingId>/purchase', methods=['GET'])
 def purchase(listingId):
@@ -88,9 +108,7 @@ def purchase(listingId):
   listings = web3Interact.getListings()
   if not any(d['listingId'] == listingId for d in listings):
     return 'listing id not exists', 404
-  try:
-
-  
+  try:  
     txHash = web3Interact.purchaseListing(listingId)
 
     if txHash is not None:
@@ -129,7 +147,19 @@ def payment():
     share1 = request.form['share1']
     share2 = request.form['share2']
 
-    contractAddress = web3Interact.createPayment(title,[address1,address2], [int(share1),int(share2)])
+    addressArr = []
+    addressArr.append(address1)
+    if address2 !='':
+      addressArr.append(address2)
+    
+    shareArr = []
+    shareArr.append(int(share1))
+    if share2 !='':
+      shareArr.append(int(share2))
+    else:
+      share2 = 0
+
+    contractAddress = web3Interact.createPayment(title,addressArr, shareArr)
 
     new_payment = Payment(title=title, contract_address=contractAddress, payment_address1=address1, \
       payment_address2=address2, share1=share1, share2=share2)
@@ -152,6 +182,24 @@ def payment():
       wrappedPayments.append(wrappedPayment)
 
     return render_template('payment.html', wrappedPayments = wrappedPayments)
+  
+
+@app.route('/payment/release', methods=['GET'])
+def releasePayment():
+    paymentContractAddress = request.args.get('contractAddress')
+    releaseAddress = request.args.get('releaseAddress')
+    receipt = web3Interact.releasePayment(paymentContractAddress,releaseAddress)
+    if receipt is not None:
+      return jsonify({"status": "ok","data": receipt})
+    else:
+      return jsonify({
+        "status": "failed",
+        "data": None
+      })
+
+
+
+
 
 
 if __name__== "__main__":

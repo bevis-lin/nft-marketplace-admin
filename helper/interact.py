@@ -172,5 +172,70 @@ def getPaymentByAddress(address):
   paymentInstance = w3.eth.contract(address=address,abi=abi)
   return paymentInstance
 
+def releasePayment(contractAddress,releaseAddress):
+  f = open('./abi/payment-abi.json')
+  abi = json.load(f)
+  f.close()
+  paymentInstance = w3.eth.contract(address=contractAddress,abi=abi)
+  contract_owner_address = config.contractOwnerAddress
+  nonce = w3.eth.get_transaction_count(contract_owner_address)
+
+  payment_txn = paymentInstance.functions.release(releaseAddress).buildTransaction({
+    'chainId': 80001,
+    'gas': 10000000,
+    'maxFeePerGas': w3.toWei('2', 'gwei'),
+    'maxPriorityFeePerGas': w3.toWei('1', 'gwei'),
+    'nonce': nonce,
+  })
+
+  private_key = config.privateKey
+  signed_txn = w3.eth.account.sign_transaction(payment_txn, private_key=private_key)
+  #print(signed_txn.hash, file=sys.stdout)
+  tx_hash = w3.eth.send_raw_transaction(signed_txn.rawTransaction)
+  #print(w3.toHex(w3.keccak(signed_txn.rawTransaction)), file=sys.stdout)
+  tx_receipt = w3.eth.wait_for_transaction_receipt(tx_hash)
+
+  print(tx_receipt, file=sys.stdout)
+  print(type(tx_receipt))
+  vals = {}
+  vals['status'] = tx_receipt.status
+  vals['transactionHash'] =w3.toHex(tx_receipt.transactionHash)
+  vals['to'] = tx_receipt.to
+
+  return vals
+
+def createListing(tokenId, price, paymentSplitterAddress):
+  try:
+    contract_owner_address = config.contractOwnerAddress
+    nonce = w3.eth.get_transaction_count(contract_owner_address)
+    priceWei = w3.toWei(price, 'ether')
+   
+    marketplace_txn = marketplaceContract_instance.functions.createPrimaryListing(int(tokenId),priceWei,paymentSplitterAddress).buildTransaction({
+      'chainId': 80001,
+      'gas': 10000000,
+      'maxFeePerGas': w3.toWei('2', 'gwei'),
+      'maxPriorityFeePerGas': w3.toWei('1', 'gwei'),
+      'nonce': nonce,
+    })
+
+    private_key = config.privateKey
+    signed_txn = w3.eth.account.sign_transaction(marketplace_txn, private_key=private_key)
+    tx_hash = w3.eth.send_raw_transaction(signed_txn.rawTransaction)
+    print(tx_hash, file=sys.stdout)
+    tx_receipt = w3.eth.wait_for_transaction_receipt(tx_hash)
+    print(tx_receipt, file=sys.stdout)
+    print(type(tx_receipt))
+    vals = {}
+    vals['status'] = tx_receipt.status
+    vals['transactionHash'] =w3.toHex(tx_receipt.transactionHash)
+    vals['to'] = tx_receipt.to
+
+    return vals
+
+  except Exception as e:
+    print(e, file=sys.stderr)
+    raise e
+
+
 def getBalanceOfAddress(address):
   return w3.fromWei(w3.eth.getBalance(address), 'ether')

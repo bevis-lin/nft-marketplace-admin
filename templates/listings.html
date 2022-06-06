@@ -14,5 +14,11 @@
       <p>ListingId:{{ listing.listingId }},TokenId:{{ listing.tokenId }},Price:{{ listing.price }}, Type: {{ listing.listingType }}</p>
     {% endfor %}
   {% endif %}  
+  <form action="/listings" method="POST">
+    Token ID:<input type="text" name="tokenId" id="tokenId"><br>
+    Price:<input type="text" name="price" id="price"><br>
+    PaymentSplitter:<input type="text" name="paymentSplitterAddress" id="paymentSplitterAddress"><br>
+    <input type="submit" value="Add Listing">
+  </form>
 </div>
 {% endblock %}

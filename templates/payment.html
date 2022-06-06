@@ -24,9 +24,19 @@
   {% for wpayment in wrappedPayments %}
   <tr>
     <td>{{ wpayment.payment.title }}</td>
-    <td>{{ wpayment.payment.contract_address }}</td>
-    <td>{{ wpayment.payment.payment_address1 }}</td>
-    <td>{{ wpayment.payment.payment_address2 }}</td>
+    <td>{{ wpayment.payment.contract_address }} </td>
+    <td>{{ wpayment.payment.payment_address1 }} 
+      <br>
+      <a href="/payment/release?contractAddress={{ wpayment.payment.contract_address }}&releaseAddress={{ wpayment.payment.payment_address1 }}">
+        release</a></td>
+    <td>
+      {% if wpayment.payment.payment_address2!='' %}
+      {{ wpayment.payment.payment_address2 }}
+      <br>
+      <a href="/payment/release?contractAddress={{ wpayment.payment.contract_address }}&releaseAddress={{ wpayment.payment.payment_address2 }}">
+        release</a>
+      {% endif %}
+    </td>
     <td>{{ wpayment.payment.share1 }}</td>
     <td>{{ wpayment.payment.share2 }}</td>
     <td>{{ wpayment.balance }}</td>
