@@ -36,6 +36,7 @@ def getListings():
     vals = {}
     vals['listingId'] = listing[0]
     vals['tokenId'] = listing[1]
+    vals['nft'] = getNFTByTokenId(listing[1])
     vals['price'] = w3.fromWei(listing[2], 'ether')
     vals['listingType'] = listing[5] # 0: Primary 1: Secondary
     listingsArr.append(vals)
@@ -51,6 +52,7 @@ def getListingById(id):
       listingResult = {}
       listingResult['listingId'] = listing[0]
       listingResult['tokenId'] = listing[1]
+      listingResult['nft'] = getNFTByTokenId(listing[1])
       listingResult['price'] = listing[2]
       listingResult['listingType'] = listing[5] # 0: Primary 1: Secondary
       break
@@ -127,15 +129,6 @@ def createPayment(title, paymentAddresses, shares):
 
     if totalShare !=100:
       raise Exception('share setting should be 100 in total')
-
-    addressString = ""
-    sharesString = ""
-    if len(paymentAddresses) >1:
-      addressString = "['"+paymentAddresses[0]+"','"+paymentAddresses[1]+"']"
-      sharesString = "["+str(shares[0])+","+str(shares[1])+"]"
-    else:
-      addressString = "['"+paymentAddresses[0]+"']"
-      sharesString = "["+str(shares[0])+"]"
 
     f = open('./abi/payment-bytecode')
     bytecode = f.read()
@@ -261,6 +254,11 @@ def getAdminOwnedNFTs():
 
 def getNFTByTokenId(tokenId):
   #get tokenUri
+  tokenUri = emperorContract_instance.functions.tokenURI(tokenId).call()
   #get metadata from pinata
-  nft = NFT(1,'test', 'http://wwww.com/1.jpg','test')
+  jsonR = json.loads(requests.get(tokenUri).content)
+  print(jsonR, file=sys.stdout)
+
+  nft = NFT(tokenId,jsonR['name'], jsonR['image'].replace('gateway.pinata.cloud',\
+      'ipfs.digi96.com'),jsonR['description'])
   return nft

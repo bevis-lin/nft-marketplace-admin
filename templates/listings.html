@@ -1,24 +1,31 @@
-{% extends 'base.html' %}
+{% extends 'layout.html' %}
 
 {% block head %}
-<title>Unsold Listings</title>
+<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/custom.css') }}">
+<title>Listings</title>
 {% endblock %}
 
 {% block body %}
-<div class="content">
-  <h1 style="text-align: center">Unsold Listings</h1>
+<div class="container">
   {% if listings|length < 1 %}
     <h4 style="text-align: center">There are no listings.</h4>
-    {% else %}
+  {% else %}
+  <div class="card-columns">
     {% for listing in listings %}
-      <p>ListingId:{{ listing.listingId }},TokenId:{{ listing.tokenId }},Price:{{ listing.price }}, Type: {{ listing.listingType }}</p>
+    <div class="card">
+      <img src="{{ listing['nft'].imageUrl }}" class="card-img-top">
+      <div class="card-body">
+        <h5 class="card-title">{{ listing['nft'].name }}</h5>
+        <p class="card-text">Listing Id: {{ listing['listingId'] }}</p>
+        <p class="card-text">Token Id: {{ listing['tokenId'] }}</p>
+        <p class="card-text">Price: {{ listing['price'] }}</p>
+        <p class="card-text">Listing Type: {{ listing['listingType'] }}</p>
+        <p class="card-text text-truncate">{{ listing['nft'].description }}</p>
+        <a href="/nft/{{ listing.tokenId }}" class="card-link">More</a>
+      </div>
+    </div>
     {% endfor %}
+  </div>
   {% endif %}  
-  <form action="/listings" method="POST">
-    Token ID:<input type="text" name="tokenId" id="tokenId"><br>
-    Price:<input type="text" name="price" id="price"><br>
-    PaymentSplitter:<input type="text" name="paymentSplitterAddress" id="paymentSplitterAddress"><br>
-    <input type="submit" value="Add Listing">
-  </form>
 </div>
 {% endblock %}

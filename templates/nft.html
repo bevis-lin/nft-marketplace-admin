@@ -1,18 +1,48 @@
-{% extends 'base.html' %}
+{% extends 'layout.html' %}
 
 {% block head %}
 <title>NFT</title>
 {% endblock %}
 
 {% block body %}
-<div class="content">
-  <h1 style="text-align: center">NFT</h1>
-      <div>
-        <p>TokenId: {{ nft.tokenId }}</p>
-        <p>Name:{{ nft.name }}</p>
-        <p><img src="{{ nft.imageUrl }}" width="50%" height="50%"></p>
-        <p>Description:{{ nft.description }}</p>
-        
-      </div>  
+<div class="container">
+      <div class="row">
+        <div class="col-8">
+          <div class="card">
+            <img src="{{ nft.imageUrl }}" class="card-img-top">
+            <div class="card-body">
+              <h5 class="card-title">{{ nft.name }}</h5>
+              <p class="card-text">TokenId: {{ nft.tokenId }}</p>
+              <p class="card-text">{{ nft.description }}</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-4">
+          <div>
+            <h2>建立一級市場Listing</h2>
+            <form action="/listings" method="POST">
+              <input type="hidden" name="tokenId" value="{{ nft.tokenId }}">
+              <div class="mb-3">
+                <label for="price" class="form-label">Price</label>
+                <input type="text" class="form-control" name="price" id="price">
+                <div id="priceHelp" class="form-text">Price unit should be ether</div>
+              </div>
+            
+              <div class="mb-3">
+                <label for="paymentSplitterAddress" class="form-label">PaymentSplitter</label>
+                <select id="paymentSplitterAddress" name="paymentSplitterAddress" class="form-select">
+                  {% for p in payments %}
+                    <option value="{{ p.contract_address }}">{{ p.title }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <button type="submit" class="btn btn-primary">Submit</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      
 </div>
 {% endblock %}

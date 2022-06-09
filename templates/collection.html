@@ -1,25 +1,34 @@
-{% extends 'base.html' %}
+{% extends 'layout.html' %}
 
 {% block head %}
+<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/custom.css') }}">
+
 <title>Collection</title>
 {% endblock %}
 
 {% block body %}
-<div class="content">
-  <h1 style="text-align: center">Collection</h1>
+<div class="container">
   {% if nfts|length < 1 %}
     <h4 style="text-align: center">There are no NFT in collection.</h4>
-    {% else %}
-    {% for nft in nfts %}
-      <div>
-        <p>TokenId: {{ nft.tokenId }}</p>
-        <p>Name:{{ nft.name }}</p>
-        <p><img src="{{ nft.imageUrl }}" width="50%" height="50%"></p>
-        <p>Description:{{ nft.description }}</p>
-        <a href="/nft/{{ nft.tokenId }}">More</a>
+  {% else %}
+  <div class="card-columns">
+  
+  {% for nft in nfts %}
+    
+      <div class="card">
+        <img src="{{ nft.imageUrl }}" class="card-img-top">
+        <div class="card-body">
+          <h5 class="card-title">{{ nft.name }}</h5>
+          <p class="card-text">TokenId: {{ nft.tokenId }}</p>
+          <p class="card-text text-truncate">{{ nft.description }}</p>
+          <a href="/nft/{{ nft.tokenId }}" class="card-link">More</a>
+        </div>
+        
       </div>
-      <hr>
-    {% endfor %}
+    
+  {% endfor %}
+  
+  </div>
   {% endif %}  
 </div>
 {% endblock %}

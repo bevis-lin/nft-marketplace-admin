@@ -2,14 +2,17 @@ from code import interact
 from crypt import methods
 from distutils.command.config import config
 from email.policy import default
+from ensurepip import bootstrap
 from flask import Flask, render_template, url_for, request, redirect, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 import helper.interact as web3Interact
 import json
 import logging
+from flask_bootstrap import Bootstrap
 
 app = Flask(__name__)
+bootstrap = Bootstrap(app)
 #app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///test.db'
 #mysql+mysqlconnector://<user>:<password>@<host>[:<port>]/<dbname>
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://root:saxovts@localhost:3306/emperor'
@@ -89,7 +92,10 @@ def listings():
     try:
       receipt = web3Interact.createListing(tokenId, price, paymentSplitterAddress)
       if receipt is not None:
-        return jsonify({"status": "ok","data": receipt})
+        #return jsonify({"status": "ok","data": receipt})
+        listings = web3Interact.getListings()
+        app.logger.info(listings)
+        return render_template('listings.html', listings=listings)
       else:
         return jsonify({
           "status": "failed",
@@ -206,7 +212,8 @@ def displayAdminOwnedNFTs():
 @app.route('/nft/<int:tokenId>', methods=['GET'])
 def displayNFT(tokenId):
   nft = web3Interact.getNFTByTokenId(tokenId)
-  return render_template('nft.html', nft = nft)
+  payments = Payment.query.order_by(Payment.date_created).all()
+  return render_template('nft.html', nft=nft, payments = payments)
 
 
 if __name__== "__main__":
