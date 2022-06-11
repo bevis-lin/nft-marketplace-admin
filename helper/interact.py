@@ -245,7 +245,8 @@ def getAdminOwnedNFTs():
   
   nftsReturn = []
   for nftTemp in contentResult['ownedNfts']:
-    nft = NFT(int(nftTemp['id']['tokenId'],16),nftTemp['metadata']['name'],nftTemp['metadata']['image'].replace('gateway.pinata.cloud',\
+    nft = NFT(int(nftTemp['id']['tokenId'],16),nftTemp['metadata']['name'],\
+      nftTemp['metadata']['image'].replace('gateway.pinata.cloud',\
       'ipfs.digi96.com'),nftTemp['metadata']['description'])
     nftsReturn.append(nft)
   
@@ -262,3 +263,34 @@ def getNFTByTokenId(tokenId):
   nft = NFT(tokenId,jsonR['name'], jsonR['image'].replace('gateway.pinata.cloud',\
       'ipfs.digi96.com'),jsonR['description'])
   return nft
+
+def mintNFT(metadataUri):
+  contract_owner_address = config.contractOwnerAddress
+  nonce = w3.eth.get_transaction_count(contract_owner_address)
+
+  emperor_txn = emperorContract_instance.functions.mintNFT(contract_owner_address,\
+    metadataUri).buildTransaction({
+      'chainId': 80001,
+      'gas': 10000000,
+      'maxFeePerGas': w3.toWei('2', 'gwei'),
+      'maxPriorityFeePerGas': w3.toWei('1', 'gwei'),
+      'nonce': nonce,
+    })
+  
+  private_key = config.privateKey
+  signed_txn = w3.eth.account.sign_transaction(emperor_txn, private_key=private_key)
+  tx_hash = w3.eth.send_raw_transaction(signed_txn.rawTransaction)
+  print(tx_hash, file=sys.stdout)
+  tx_receipt = w3.eth.wait_for_transaction_receipt(tx_hash)
+  print(tx_receipt, file=sys.stdout)
+  print(type(tx_receipt))
+  vals = {}
+  vals['status'] = tx_receipt.status
+  vals['transactionHash'] = w3.toHex(tx_receipt.transactionHash)
+  vals['mintedTokenId'] = int(tx_receipt.tokenId, 16)
+  vals['to'] = tx_receipt.to
+
+  return vals
+
+
+   

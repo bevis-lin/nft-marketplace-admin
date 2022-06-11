@@ -3,20 +3,31 @@ from crypt import methods
 from distutils.command.config import config
 from email.policy import default
 from ensurepip import bootstrap
-from flask import Flask, render_template, url_for, request, redirect, jsonify
+from flask import Flask,flash, render_template, url_for, request, redirect, jsonify, send_from_directory
 from flask_sqlalchemy import SQLAlchemy
+from werkzeug.utils import secure_filename
 from datetime import datetime
 import helper.interact as web3Interact
 import json
 import logging
+import os
+import requests
 from flask_bootstrap import Bootstrap
 
+UPLOAD_FOLDER = '/Users/bevis/flask/uploads'
+ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'}
+
+
 app = Flask(__name__)
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
 bootstrap = Bootstrap(app)
 #app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///test.db'
 #mysql+mysqlconnector://<user>:<password>@<host>[:<port>]/<dbname>
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://root:saxovts@localhost:3306/emperor'
 db = SQLAlchemy(app)
+
+
 
 class Todo(db.Model):
   id = db.Column(db.Integer, primary_key=True)
@@ -215,6 +226,86 @@ def displayNFT(tokenId):
   payments = Payment.query.order_by(Payment.date_created).all()
   return render_template('nft.html', nft=nft, payments = payments)
 
+def allowed_file(filename):
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+@app.route('/upload', methods=['GET', 'POST'])
+def upload_file():
+    if request.method == 'POST':
+        # check if the post request has the file part
+        if 'file' not in request.files:
+            flash('No file part')
+            return redirect(request.url)
+        file = request.files['file']
+        # If the user does not select a file, the browser submits an
+        # empty file without a filename.
+        if file.filename == '':
+            flash('No selected file')
+            return redirect(request.url)
+        if file and allowed_file(file.filename):
+            filename = secure_filename(file.filename)
+            file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+            pinresult = pinata_upload_file(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+            pinresultJson = json.loads(pinresult)
+            imageUrl = 'https://ipfs.digi96.com/ipfs/'+pinresultJson['IpfsHash']
+            payload = json.dumps({
+              "name": "測試",
+              "image": imageUrl,
+              "description": "測試描述文字",
+              "traits":[{"trait_type": "年代", "value": "1969"},{"trait_type": "媒材", "value": "鏡框"},\
+                {"trait_type": "尺寸", "value": "54x75cm"}, {"trait_type": "款識", "value": "爰翁已酉作"},\
+                {"trait_type":"鈐印", "value":"大千唯印大年(朱)"}]
+            })
+            pinMetadatResult = pinata_upload_json(payload)
+            print(pinMetadatResult)
+            pinMetadatResultJson = json.loads(pinMetadatResult)
+            print(pinMetadatResultJson['IpfsHash'])
+            tokenUri = 'https://ipfs.digi96.com/ipfs/'+pinMetadatResultJson['IpfsHash']
+            mintResult = web3Interact.mintNFT(tokenUri)
+            if mintResult['status'] == True:
+              return redirect(url_for('collection'))
+            else:
+              return 'Failed to mint', 500
+    return '''
+    <!doctype html>
+    <title>Upload new File</title>
+    <h1>Upload new File</h1>
+    <form method=post enctype=multipart/form-data>
+      <input type=file name=file>
+      <input type=submit value=Upload>
+    </form>
+    '''
+
+def pinata_upload_file(filepath):
+    url = "https://api.pinata.cloud/pinning/pinFileToIPFS"
+
+    payload={'pinataOptions': '{"cidVersion": 1}','pinataMetadata': '{"name": "MyFile", "keyvalues": {"company": "Pinata"}}'}
+    files=[('file',('cat.JPG',open(filepath,'rb'),'application/octet-stream'))]
+    headers = {
+      'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySW5mb3JtYXRpb24iOnsiaWQiOiJkMmQ2ZmM0NS1kZDFkLTQzYmQtYTg3Mi1kOWJiNDk0OWY5MzEiLCJlbWFpbCI6ImJldmlzLmxpbkBpY2xvdWQuY29tIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsInBpbl9wb2xpY3kiOnsicmVnaW9ucyI6W3siaWQiOiJGUkExIiwiZGVzaXJlZFJlcGxpY2F0aW9uQ291bnQiOjF9XSwidmVyc2lvbiI6MX0sIm1mYV9lbmFibGVkIjpmYWxzZSwic3RhdHVzIjoiQUNUSVZFIn0sImF1dGhlbnRpY2F0aW9uVHlwZSI6InNjb3BlZEtleSIsInNjb3BlZEtleUtleSI6IjljYzVhMDJiMmI2YmI3ZGRiOTU2Iiwic2NvcGVkS2V5U2VjcmV0IjoiNmI4YjI5YjkxNjViNzg5M2QwZjYzYzE5M2M1MGEyZjBhNzE0NGMxM2FmYTBmZGRlYzQ0Njg3MTMwOGNlYWFkZiIsImlhdCI6MTY1NDg3MTI0Mn0.nEhgVWJo0FvFvolKLYmKfqN_oop9odUBC19Ic1xPPCw'
+    }
+    response = requests.request("POST", url, headers=headers, data=payload, files=files)
+    print(response.text)
+    #{"IpfsHash":"bafkreib3dq4th5n2acmclx34lhcdfrb4avr3m5rlcd6duolotg4vkelqha","PinSize":137929,"Timestamp":"2022-06-11T07:09:48.404Z"}
+    return response.text
+
+def pinata_upload_json(jsonPayload):
+    url = "https://api.pinata.cloud/pinning/pinJSONToIPFS"
+
+    headers = {'Content-Type': 'application/json',\
+      'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySW5mb3JtYXRpb24iOnsiaWQiOiJkMmQ2ZmM0NS1kZDFkLTQzYmQtYTg3Mi1kOWJiNDk0OWY5MzEiLCJlbWFpbCI6ImJldmlzLmxpbkBpY2xvdWQuY29tIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsInBpbl9wb2xpY3kiOnsicmVnaW9ucyI6W3siaWQiOiJGUkExIiwiZGVzaXJlZFJlcGxpY2F0aW9uQ291bnQiOjF9XSwidmVyc2lvbiI6MX0sIm1mYV9lbmFibGVkIjpmYWxzZSwic3RhdHVzIjoiQUNUSVZFIn0sImF1dGhlbnRpY2F0aW9uVHlwZSI6InNjb3BlZEtleSIsInNjb3BlZEtleUtleSI6IjljYzVhMDJiMmI2YmI3ZGRiOTU2Iiwic2NvcGVkS2V5U2VjcmV0IjoiNmI4YjI5YjkxNjViNzg5M2QwZjYzYzE5M2M1MGEyZjBhNzE0NGMxM2FmYTBmZGRlYzQ0Njg3MTMwOGNlYWFkZiIsImlhdCI6MTY1NDg3MTI0Mn0.nEhgVWJo0FvFvolKLYmKfqN_oop9odUBC19Ic1xPPCw'
+    }
+
+    response = requests.request("POST", url, headers=headers, data=jsonPayload)
+
+    print(response.text)
+
+    return response.text
+
+@app.route('/uploads/<name>')
+def download_file(name):
+    return send_from_directory(app.config["UPLOAD_FOLDER"], name)
 
 if __name__== "__main__":
   app.run(debug=True)
