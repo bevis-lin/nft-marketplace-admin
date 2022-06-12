@@ -38,15 +38,14 @@ def getListings():
   dummyNFT['description'] = 'test'
 
   #get all nft in this contract from alchemy
-
-
+  nfts = getOwnedNFTs(config.marketContractAddress)
+  print(nfts)
 
   for listing in listings:
     vals = {}
     vals['listingId'] = listing[0]
     vals['tokenId'] = listing[1]
-    vals['nft'] = getNFTByTokenId(listing[1])
-    #vals['nft'] = dummyNFT
+    vals['nft'] = next(nft for nft in nfts if nft.tokenId == listing[1])
     vals['price'] = w3.fromWei(listing[2], 'ether')
     vals['listingType'] = listing[5] # 0: Primary 1: Secondary
     listingsArr.append(vals)
@@ -246,8 +245,8 @@ def createListing(tokenId, price, paymentSplitterAddress):
 def getBalanceOfAddress(address):
   return w3.fromWei(w3.eth.getBalance(address), 'ether')
 
-def getAdminOwnedNFTs():
-  urlGet = config.web3HttpProvider + '/getNFTs/?owner='+config.contractOwnerAddress+\
+def getOwnedNFTs(ownerAddress):
+  urlGet = config.web3HttpProvider + '/getNFTs/?owner='+ownerAddress+\
     '&contractAddresses[]='+ config.emperorContractAddress
   print(urlGet, file=sys.stdout)
   contentResult = json.loads(requests.get(urlGet).content)

@@ -217,7 +217,7 @@ def releasePayment():
 
 @app.route('/collection', methods=['GET'])
 def displayAdminOwnedNFTs():
-  nfts = web3Interact.getAdminOwnedNFTs()
+  nfts = web3Interact.getOwnedNFTs(config.contractOwnerAddress)
   
   return render_template('collection.html', nfts = nfts)
 
