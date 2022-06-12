@@ -8,6 +8,13 @@
 
 {% block body %}
 <div class="container">
+  <div class="row">
+    <div class="col-md-12 bg-light text-right">
+      <a class="btn btn-primary" style="margin-bottom: 10px" href="/mint" role="button">Mint</a>
+    </div>
+</div>
+  
+ 
   {% if nfts|length < 1 %}
     <h4 style="text-align: center">There are no NFT in collection.</h4>
   {% else %}

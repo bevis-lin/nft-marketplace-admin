@@ -241,10 +241,11 @@ def getAdminOwnedNFTs():
     '&contractAddresses[]='+ config.emperorContractAddress
   print(urlGet, file=sys.stdout)
   contentResult = json.loads(requests.get(urlGet).content)
-  print(contentResult, file=sys.stdout)
+  #print(contentResult, file=sys.stdout)
   
   nftsReturn = []
   for nftTemp in contentResult['ownedNfts']:
+    print(nftTemp['metadata'])
     nft = NFT(int(nftTemp['id']['tokenId'],16),nftTemp['metadata']['name'],\
       nftTemp['metadata']['image'].replace('gateway.pinata.cloud',\
       'ipfs.digi96.com'),nftTemp['metadata']['description'])
@@ -287,7 +288,6 @@ def mintNFT(metadataUri):
   vals = {}
   vals['status'] = tx_receipt.status
   vals['transactionHash'] = w3.toHex(tx_receipt.transactionHash)
-  vals['mintedTokenId'] = int(tx_receipt.tokenId, 16)
   vals['to'] = tx_receipt.to
 
   return vals

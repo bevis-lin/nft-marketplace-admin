@@ -1,0 +1,35 @@
+{% extends 'layout.html' %}
+
+{% block head %}
+<title>Mint</title>
+{% endblock %}
+
+{% block body %}
+<div class="container">
+<h2>鑄造NFT</h2><br>
+<form action="/mint" method="POST" enctype="multipart/form-data">
+  <div class="form-group col-md-16">
+    <label for="name" class="control-label">名稱</label>
+    <input type="text" class="form-contorl" style="width:100%" name="name" id="name">
+  </div>
+
+  <div class="form-group col-md-16">
+    <label for="description" class="control-label">描述</label>
+    <textarea class="form-contorl" style="width:100%" name="description" id="description" rows="5"></textarea>
+  </div>
+
+  <div class="form-group col-md-16">
+    <label for="file" class="control-label">圖檔</label>
+    <input type="file" class="form-control" name="file" id="file">
+  </div>
+
+  <div class="form-group col-md-16 text-right">
+    <input type="submit" class="btn btn-primary" value="Upload">
+  </div>
+  
+
+</form>
+
+</div>
+
+{% endblock %}

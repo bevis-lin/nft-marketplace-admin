@@ -10,4 +10,5 @@ marketContractAddress = environ.get('Marketplace_Contract_Address')
 contractOwnerAddress = environ.get('Contract_Owner_Address')
 privateKey = environ.get('Contract_Owner_Key')
 nftKeeperAddress = environ.get('NFT_Keeper_Address')
+pinataJWT = environ.get('Pinata_JWT')
 
