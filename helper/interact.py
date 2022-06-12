@@ -32,11 +32,21 @@ def getListings():
   listings = marketplaceContract_instance.functions.getUnsoldListings().call()
   print(listings, file=sys.stderr)
   listingsArr=[]
+  dummyNFT = {}
+  dummyNFT['name'] = 'test'
+  dummyNFT['imageUrl'] = 'https://ipfs.digi96.com/ipfs/bafybeiaijl4ztlpkrfe443duhs2chki7ggtr4adcjrvob6ntas7lf5t2lm'
+  dummyNFT['description'] = 'test'
+
+  #get all nft in this contract from alchemy
+
+
+
   for listing in listings:
     vals = {}
     vals['listingId'] = listing[0]
     vals['tokenId'] = listing[1]
     vals['nft'] = getNFTByTokenId(listing[1])
+    #vals['nft'] = dummyNFT
     vals['price'] = w3.fromWei(listing[2], 'ether')
     vals['listingType'] = listing[5] # 0: Primary 1: Secondary
     listingsArr.append(vals)
@@ -255,10 +265,13 @@ def getAdminOwnedNFTs():
   return nftsReturn
 
 def getNFTByTokenId(tokenId):
+  print('about to get tokenUri for tokenId:'+ str(tokenId))
   #get tokenUri
   tokenUri = emperorContract_instance.functions.tokenURI(tokenId).call()
+  print(tokenUri)
   #get metadata from pinata
-  jsonR = json.loads(requests.get(tokenUri).content)
+  jsonR = json.loads(requests.get(tokenUri.replace('gateway.pinata.cloud',\
+    'ipfs.digi96.com')).content)
   print(jsonR, file=sys.stdout)
 
   nft = NFT(tokenId,jsonR['name'], jsonR['image'].replace('gateway.pinata.cloud',\
