@@ -11,4 +11,5 @@ contractOwnerAddress = environ.get('Contract_Owner_Address')
 privateKey = environ.get('Contract_Owner_Key')
 nftKeeperAddress = environ.get('NFT_Keeper_Address')
 pinataJWT = environ.get('Pinata_JWT')
-
+databaseURI = environ.get('DATABASE_URI')
+uploadFolder = environ.get('UPLOAD_FOLDER')

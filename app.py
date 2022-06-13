@@ -15,7 +15,7 @@ import requests
 import config as config
 from flask_bootstrap import Bootstrap
 
-UPLOAD_FOLDER = '/Users/bevis/flask/uploads'
+UPLOAD_FOLDER = config.uploadFolder
 ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'}
 
 
@@ -25,7 +25,7 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 bootstrap = Bootstrap(app)
 #app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///test.db'
 #mysql+mysqlconnector://<user>:<password>@<host>[:<port>]/<dbname>
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://root:saxovts@localhost:3306/emperor'
+app.config['SQLALCHEMY_DATABASE_URI'] = config.databaseURI
 db = SQLAlchemy(app)
 
 
