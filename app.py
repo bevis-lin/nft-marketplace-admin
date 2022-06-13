@@ -27,7 +27,7 @@ bootstrap = Bootstrap(app)
 #mysql+mysqlconnector://<user>:<password>@<host>[:<port>]/<dbname>
 app.config['SQLALCHEMY_DATABASE_URI'] = config.databaseURI
 db = SQLAlchemy(app)
-
+db.create_all(app=app)
 
 
 class Todo(db.Model):
