@@ -201,6 +201,9 @@ def payment():
 
     return render_template('payment.html', wrappedPayments = wrappedPayments)
   
+@app.route('/payment/create', methods=['GET'])
+def newPaymentForm():
+  return render_template('create_payment.html')
 
 @app.route('/payment/release', methods=['GET'])
 def releasePayment():
@@ -225,7 +228,10 @@ def displayAdminOwnedNFTs():
 def displayNFT(tokenId):
   nft = web3Interact.getNFTByTokenId(tokenId)
   payments = Payment.query.order_by(Payment.date_created).all()
-  return render_template('nft.html', nft=nft, payments = payments)
+  args = request.args
+  isListed = args.get("listingId") is not None
+    
+  return render_template('nft.html', nft=nft, payments = payments, isListed = isListed)
 
 def allowed_file(filename):
     return '.' in filename and \

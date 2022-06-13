@@ -18,31 +18,33 @@
           </div>
         </div>
         <div class="col-4">
-          <div>
-            <h2>建立一級市場Listing</h2>
-            <form action="/listings" method="POST">
-              <input type="hidden" name="tokenId" value="{{ nft.tokenId }}">
-              <div class="mb-3">
-                <label for="price" class="form-label">Price</label>
-                <input type="text" class="form-control" name="price" id="price">
-                <div id="priceHelp" class="form-text">Price unit should be ether</div>
-              </div>
-            
-              <div class="mb-3">
-                <label for="paymentSplitterAddress" class="form-label">PaymentSplitter</label>
-                <select id="paymentSplitterAddress" name="paymentSplitterAddress" class="form-select">
-                  {% for p in payments %}
-                    <option value="{{ p.contract_address }}">{{ p.title }}</option>
-                  {% endfor %}
-                </select>
-              </div>
-              <button type="submit" class="btn btn-primary">Submit</button>
-              </div>
-            </form>
-          </div>
+          {% if not isListed %}
+            <div>
+              <h2>建立一級市場Listing</h2>
+              <form action="/listings" method="POST">
+                <input type="hidden" name="tokenId" value="{{ nft.tokenId }}">
+                <div class="mb-4">
+                  <label for="price" class="form-label">Price</label>
+                  <input type="text" class="form-control" name="price" id="price">
+                  <div id="priceHelp" class="form-text">Price unit should be ether</div>
+                </div>
+              
+                <div class="mb-4">
+                  <label for="paymentSplitterAddress" class="form-label">PaymentSplitter</label>
+                  <select id="paymentSplitterAddress" name="paymentSplitterAddress" class="form-select">
+                    {% for p in payments %}
+                      <option value="{{ p.contract_address }}">{{ p.title }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+                <button type="submit" class="btn btn-primary">Submit</button>                
+              </form>
+            </div>
+          
+          {% else %}
+            <p>上架中</p>
+          {% endif %}
         </div>
       </div>
-
-      
 </div>
 {% endblock %}

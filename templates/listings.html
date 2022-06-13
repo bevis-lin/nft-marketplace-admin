@@ -21,7 +21,7 @@
         <p class="card-text">Price: {{ listing['price'] }}</p>
         <p class="card-text">Listing Type: {{ listing['listingType'] }}</p>
         <p class="card-text text-truncate">{{ listing['nft'].description }}</p>
-        <a href="/nft/{{ listing.tokenId }}" class="card-link">More</a>
+        <a href="/nft/{{ listing.tokenId }}?listingId={{ listing['listingId']}}" class="card-link">More</a>
       </div>
     </div>
     {% endfor %}
