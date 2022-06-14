@@ -255,9 +255,16 @@ def getOwnedNFTs(ownerAddress):
   nftsReturn = []
   for nftTemp in contentResult['ownedNfts']:
     print(nftTemp['metadata'])
-    nft = NFT(int(nftTemp['id']['tokenId'],16),nftTemp['metadata']['name'],\
-      nftTemp['metadata']['image'].replace('gateway.pinata.cloud',\
-      'ipfs.digi96.com'),nftTemp['metadata']['description'])
+    nftName = 'N/A'
+    nftImage = 'https://ipfs.digi96.com/ipfs/QmcsRmpwMUBqfVq6wq4zTCQA3ATHDp8bcyLigrmoEikTio'
+    nftDescription = 'N/A'
+    if "name" in nftTemp['metadata']:
+      nftName = nftTemp['metadata']['name']
+      nftImage = nftTemp['metadata']['image'].replace('gateway.pinata.cloud',\
+      'ipfs.digi96.com')
+      nftDescription = nftTemp['metadata']['description']
+
+    nft = NFT(int(nftTemp['id']['tokenId'],16),nftName,nftImage,nftDescription)
     nftsReturn.append(nft)
   
   print(nftsReturn, file=sys.stdout)
@@ -294,15 +301,26 @@ def mintNFT(metadataUri):
   signed_txn = w3.eth.account.sign_transaction(emperor_txn, private_key=private_key)
   tx_hash = w3.eth.send_raw_transaction(signed_txn.rawTransaction)
   print(tx_hash, file=sys.stdout)
-  tx_receipt = w3.eth.wait_for_transaction_receipt(tx_hash)
-  print(tx_receipt, file=sys.stdout)
-  print(type(tx_receipt))
-  vals = {}
-  vals['status'] = tx_receipt.status
-  vals['transactionHash'] = w3.toHex(tx_receipt.transactionHash)
-  vals['to'] = tx_receipt.to
+  #tx_receipt = w3.eth.wait_for_transaction_receipt(tx_hash)
+  #print(tx_receipt, file=sys.stdout)
+  #print(type(tx_receipt))
+  #vals = {}
+  #vals['status'] = tx_receipt.status
+  #vals['transactionHash'] = w3.toHex(tx_receipt.transactionHash)
+  #vals['to'] = tx_receipt.to
 
-  return vals
+  #return vals
+  return w3.toHex(w3.keccak(signed_txn.rawTransaction))
+
+def getTransactionReceipt(txHash):
+  try:
+    receipt = w3.eth.get_transaction_receipt(txHash)
+    return receipt
+  except Exception as e:
+    #<class 'web3.exceptions.TransactionNotFound'>
+    print(type(e))
+    print('Unknow error', e)
+    return None
 
 
    

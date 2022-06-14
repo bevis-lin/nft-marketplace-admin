@@ -272,11 +272,14 @@ def upload_file():
             pinMetadatResultJson = json.loads(pinMetadatResult)
             print(pinMetadatResultJson['IpfsHash'])
             tokenUri = 'https://ipfs.digi96.com/ipfs/'+pinMetadatResultJson['IpfsHash']
-            mintResult = web3Interact.mintNFT(tokenUri)
-            if mintResult['status'] == True:
-              return redirect(url_for('displayAdminOwnedNFTs'))
-            else:
-              return 'Failed to mint', 500
+            #mintResult = web3Interact.mintNFT(tokenUri)
+            # if mintResult['status'] == True:
+            #   return redirect(url_for('displayAdminOwnedNFTs'))
+            # else:
+            #   return 'Failed to mint', 500
+            txHash = web3Interact.mintNFT(tokenUri)
+            print(txHash)
+            return redirect(url_for('getTransactionStatus', txHash=txHash))
     
     return render_template('mint.html')
 
@@ -310,6 +313,20 @@ def pinata_upload_json(jsonPayload):
 @app.route('/uploads/<name>')
 def download_file(name):
     return send_from_directory(app.config["UPLOAD_FOLDER"], name)
+
+@app.route('/transaction/<txHash>/status')
+def getTransactionStatus(txHash):
+  receipt = web3Interact.getTransactionReceipt(txHash)
+  status = 'Incomplete'
+  
+  if receipt is None:
+    return render_template('transaction_check.html', txHash=txHash, status=status)
+  
+  if receipt.status==1:
+    status = 'Success'
+  else:
+    status = 'Failed'
+  return render_template('transaction_check.html', txHash=txHash, status=status)
 
 if __name__== "__main__":
   app.run(debug=True)
