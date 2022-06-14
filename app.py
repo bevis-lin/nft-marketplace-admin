@@ -328,5 +328,9 @@ def getTransactionStatus(txHash):
     status = 'Failed'
   return render_template('transaction_check.html', txHash=txHash, status=status)
 
+@app.route('/admin/wallet')
+def getAdminWallet():
+  return render_template('admin_wallet.html', ownerAddress=config.contractOwnerAddress)
+
 if __name__== "__main__":
   app.run(debug=True)
