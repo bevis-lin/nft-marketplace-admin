@@ -252,7 +252,7 @@ def displayNFT(tokenId):
 
         return render_template('nft.html', nft=nft, payments=payments, isListed=isListed)
     except Exception as e:
-        result = {"status": "failed", "data": e}
+        result = {"status": "failed", "data": str(e)}
         return result, 500
     finally:
         db.session.close()
