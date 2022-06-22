@@ -283,10 +283,10 @@ def upload_file():
                 "name": request.form['name'],
                 "image": imageUrl,
                 "description": request.form['description'],
-                "traits": [{"trait_type": "年代", "value": "1969"}, {"trait_type": "媒材", "value": "鏡框"},
-                           {"trait_type": "尺寸", "value": "54x75cm"}, {
-                    "trait_type": "款識", "value": "爰翁已酉作"},
-                    {"trait_type": "鈐印", "value": "大千唯印大年(朱)"}]
+                "traits": [{"trait_type": "年代", "value": request.form['age']}, {"trait_type": "媒材", "value": request.form['media']},
+                           {"trait_type": "尺寸", "value": request.form['size']}, {
+                    "trait_type": "款識", "value": request.form['comment']},
+                    {"trait_type": "鈐印", "value": request.form['stamp']}]
             })
             pinMetadatResult = pinata_upload_json(payload)
             print(pinMetadatResult)
