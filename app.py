@@ -234,10 +234,10 @@ def displayAdminOwnedNFTs():
     return render_template('collection.html', nfts=nfts)
 
 
-@app.route('/nft/<int:tokenId>', methods=['GET'])
-def displayNFT(tokenId):
+@app.route('/nft/<string:tokenType>/<int:tokenId>', methods=['GET'])
+def displayNFT(tokenType, tokenId):
     try:
-        nft = web3Interact.getNFTByTokenId(tokenId)
+        nft = web3Interact.getNFTByTokenId(tokenType, tokenId)
         payments = Payment.query.order_by(Payment.date_created).all()
         args = request.args
         isListed = args.get("listingId") is not None

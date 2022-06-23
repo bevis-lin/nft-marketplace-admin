@@ -17,6 +17,10 @@ f = open('./abi/emperor-abi.json')
 emperorABI = json.load(f)
 f.close()
 
+f = open('./abi/emperorfusion-abi.json')
+emperorFusionABI = json.load(f)
+f.close()
+
 f = open('./abi/marketplace-abi.json')
 marketplaceABI = json.load(f)
 f.close()
@@ -25,6 +29,10 @@ f.close()
 
 emperorContract_instance = w3.eth.contract(
     address=config.emperorContractAddress, abi=emperorABI)
+
+emperorFusionContract_instance = w3.eth.contract(
+    address=config.emperorFusionContractAddress, abi=emperorFusionABI)
+
 marketplaceContract_instance = w3.eth.contract(
     address=config.marketContractAddress, abi=marketplaceABI)
 
@@ -262,7 +270,7 @@ def getBalanceOfAddress(address):
 def getOwnedNFTs(ownerAddress):
     urlGet = config.web3HttpProvider + '/getNFTs/?owner='+ownerAddress +\
         '&contractAddresses[]=' + config.emperorContractAddress + "&contractAddresses[]=" +\
-             config.emperorFusionContractAddress
+        config.emperorFusionContractAddress
     print(urlGet, file=sys.stdout)
     contentResult = json.loads(requests.get(urlGet).content)
     #print(contentResult, file=sys.stdout)
@@ -279,7 +287,7 @@ def getOwnedNFTs(ownerAddress):
                                                             'ipfs.digi96.com')
             nftDescription = nftTemp['metadata']['description']
 
-        nft = NFT(int(nftTemp['id']['tokenId'], 16),
+        nft = NFT(nftTemp['id']['tokenMetadata']['tokenType'], int(nftTemp['id']['tokenId'], 16),
                   nftName, nftImage, nftDescription)
         nftsReturn.append(nft)
 
@@ -287,18 +295,23 @@ def getOwnedNFTs(ownerAddress):
     return nftsReturn
 
 
-def getNFTByTokenId(tokenId):
+def getNFTByTokenId(tokenType, tokenId):
     print('about to get tokenUri for tokenId:' + str(tokenId))
     # get tokenUri
-    tokenUri = emperorContract_instance.functions.tokenURI(tokenId).call()
+    tokenUri = ""
+    if tokenType == "ERC721":
+        tokenUri = emperorContract_instance.functions.tokenURI(tokenId).call()
+    else:
+        tokenUri = emperorFusionContract_instance.functions.uri(tokenId).call()
+
     print(tokenUri)
     # get metadata from pinata
     jsonR = json.loads(requests.get(tokenUri.replace('gateway.pinata.cloud',
                                                      'ipfs.digi96.com')).content)
     print(jsonR, file=sys.stdout)
 
-    nft = NFT(tokenId, jsonR['name'], jsonR['image'].replace('gateway.pinata.cloud',
-                                                             'ipfs.digi96.com'), jsonR['description'])
+    nft = NFT(tokenType, tokenId, jsonR['name'], jsonR['image'].replace('gateway.pinata.cloud',
+                                                                        'ipfs.digi96.com'), jsonR['description'])
     return nft
 
 
