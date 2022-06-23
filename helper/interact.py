@@ -261,7 +261,8 @@ def getBalanceOfAddress(address):
 
 def getOwnedNFTs(ownerAddress):
     urlGet = config.web3HttpProvider + '/getNFTs/?owner='+ownerAddress +\
-        '&contractAddresses[]=' + config.emperorContractAddress
+        '&contractAddresses[]=' + config.emperorContractAddress + "&contractAddresses[]=" +\
+             config.emperorFusionContractAddress
     print(urlGet, file=sys.stdout)
     contentResult = json.loads(requests.get(urlGet).content)
     #print(contentResult, file=sys.stdout)
