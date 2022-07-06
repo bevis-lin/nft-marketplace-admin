@@ -105,10 +105,11 @@ def listings():
         return render_template('listings.html', listings=listings)
     else:
         tokenId = request.form['tokenId']
+        tokenType = request.form['tokenType']
         price = request.form['price']
         paymentSplitterAddress = request.form['paymentSplitterAddress']
         try:
-            txHash = web3Interact.createListing(
+            txHash = web3Interact.createListing(tokenType,
                 tokenId, price, paymentSplitterAddress)
             print(txHash)
             return redirect(url_for('getTransactionStatus', txHash=txHash))
@@ -238,11 +239,19 @@ def displayAdminOwnedNFTs():
 def displayNFT(tokenType, tokenId):
     try:
         nft = web3Interact.getNFTByTokenId(tokenType, tokenId)
+        tokenBalance = 1
+        if tokenType == 'ERC1155':
+            tokenBalance = web3Interact.getERC115TokenBalance(tokenId)
+
         payments = Payment.query.order_by(Payment.date_created).all()
         args = request.args
         isListed = args.get("listingId") is not None
+        listing = None
+        if isListed is True:
+            listing = web3Interact.getListingById(args.get("listingId"))
 
-        return render_template('nft.html', nft=nft, payments=payments, isListed=isListed)
+        print('contract address'+ nft.address)
+        return render_template('nft.html', nft=nft, payments=payments, isListed=isListed, listing=listing, tokenBalance=tokenBalance)
     except Exception as e:
         result = {"status": "failed", "data": str(e)}
         return result, 500
@@ -299,7 +308,7 @@ def upload_file():
             #   return redirect(url_for('displayAdminOwnedNFTs'))
             # else:
             #   return 'Failed to mint', 500
-            txHash = web3Interact.mintNFT(tokenUri)
+            txHash = web3Interact.mintNFT(int(request.form['amount']),tokenUri)
             print(txHash)
             return redirect(url_for('getTransactionStatus', txHash=txHash))
 

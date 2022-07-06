@@ -39,7 +39,7 @@ marketplaceContract_instance = w3.eth.contract(
 
 def getListings():
     listings = marketplaceContract_instance.functions.getUnsoldListings().call()
-    print(listings, file=sys.stderr)
+    #print(listings, file=sys.stderr)
     listingsArr = []
     dummyNFT = {}
     dummyNFT['name'] = 'test'
@@ -48,17 +48,34 @@ def getListings():
 
     # get all nft in this contract from alchemy
     nfts = getOwnedNFTs(config.marketContractAddress)
-    print(nfts)
+    print(nfts[1].tokenType)
 
     for listing in listings:
         vals = {}
         vals['listingId'] = listing[0]
-        vals['tokenId'] = listing[1]
-        vals['nft'] = next(nft for nft in nfts if nft.tokenId == listing[1])
-        vals['price'] = w3.fromWei(listing[2], 'ether')
-        vals['listingType'] = listing[5]  # 0: Primary 1: Secondary
-        listingsArr.append(vals)
+        vals['tokenId'] = listing[2]
+        vals['price'] = w3.fromWei(listing[3], 'ether')
+        vals['listingType'] = listing[6]  # 0: Primary 1: Secondary
+        
+        nftTemp = None
+        #vals['nft'] = next(nft for nft in nfts if nft.tokenType=='ERC' nft.tokenId == listing[1])
+        for nft in nfts:
+            if listing[1] == 0:
+                if nft.tokenType=='ERC721' and nft.tokenId == listing[2]:
+                    nftTemp = nft
+                    break
 
+            if listing[1] == 1:
+                if nft.tokenType=='ERC1155' and nft.tokenId == listing[2]:
+                    nftTemp = nft
+                    break
+
+        if nftTemp is not None:
+            vals['nft'] = nftTemp
+            listingsArr.append(vals)
+        else:
+            print('NFT not found,listing id:'+ str(listing[0])+ ', tokenId:'+ str(listing[2]))
+            
     return listingsArr
 
 
@@ -66,16 +83,37 @@ def getListingById(id):
     listings = marketplaceContract_instance.functions.getUnsoldListings().call()
     print(listings, file=sys.stderr)
     listingResult = None
+
+    # get all nft in this contract from alchemy
+    nfts = getOwnedNFTs(config.marketContractAddress)
+    print(nfts[1].tokenType)
+
     for listing in listings:
-        if listing[0] == id:
+        if listing[0] == int(id):
+
+            nftTemp = None
+            #vals['nft'] = next(nft for nft in nfts if nft.tokenType=='ERC' nft.tokenId == listing[1])
+            for nft in nfts:
+                if listing[1] == 0:
+                    if nft.tokenType=='ERC721' and nft.tokenId == listing[2]:
+                        nftTemp = nft
+                        break
+
+                if listing[1] == 1:
+                    if nft.tokenType=='ERC1155' and nft.tokenId == listing[2]:
+                        nftTemp = nft
+                        break
+
             listingResult = {}
             listingResult['listingId'] = listing[0]
-            listingResult['tokenId'] = listing[1]
-            listingResult['nft'] = getNFTByTokenId(listing[1])
-            listingResult['price'] = listing[2]
+            listingResult['tokenId'] = listing[2]
+            listingResult['nft'] = nftTemp
+            listingResult['price'] = w3.fromWei(listing[3], 'ether')
             # 0: Primary 1: Secondary
-            listingResult['listingType'] = listing[5]
+            listingResult['listingType'] = listing[6]
             break
+    
+    print(listingResult)
 
     return listingResult
 
@@ -227,13 +265,22 @@ def releasePayment(contractAddress, releaseAddress):
     return vals
 
 
-def createListing(tokenId, price, paymentSplitterAddress):
+def createListing(tokenType, tokenId, price, paymentSplitterAddress):
     try:
         contract_owner_address = config.contractOwnerAddress
         nonce = w3.eth.get_transaction_count(contract_owner_address)
         priceWei = w3.toWei(price, 'ether')
 
-        marketplace_txn = marketplaceContract_instance.functions.createPrimaryListing(
+        tokenTypeID = 0
+
+        if tokenType == 'ERC721':
+            tokenTypeID = 0
+        elif tokenType == 'ERC1155':
+            tokenTypeID = 1
+        else:
+            raise Exception('Wrong token type provided')
+
+        marketplace_txn = marketplaceContract_instance.functions.createPrimaryListing(tokenTypeID,
             int(tokenId), priceWei, paymentSplitterAddress).buildTransaction({
                 'chainId': 80001,
                 'gas': 10000000,
@@ -273,11 +320,11 @@ def getOwnedNFTs(ownerAddress):
         config.emperorFusionContractAddress
     print(urlGet, file=sys.stdout)
     contentResult = json.loads(requests.get(urlGet).content)
-    #print(contentResult, file=sys.stdout)
+    print(contentResult, file=sys.stdout)
 
     nftsReturn = []
     for nftTemp in contentResult['ownedNfts']:
-        print(nftTemp['metadata'])
+        #print(nftTemp['metadata'])
         nftName = 'N/A'
         nftImage = 'https://ipfs.digi96.com/ipfs/QmcsRmpwMUBqfVq6wq4zTCQA3ATHDp8bcyLigrmoEikTio'
         nftDescription = 'N/A'
@@ -288,10 +335,10 @@ def getOwnedNFTs(ownerAddress):
             nftDescription = nftTemp['metadata']['description']
 
         nft = NFT(nftTemp['id']['tokenMetadata']['tokenType'], int(nftTemp['id']['tokenId'], 16),
-                  nftName, nftImage, nftDescription)
+                  nftName, nftImage, nftDescription, nftTemp['contract']['address'], nftTemp['metadata']['traits'])
         nftsReturn.append(nft)
 
-    print(nftsReturn, file=sys.stdout)
+    #print(nftsReturn, file=sys.stdout)
     return nftsReturn
 
 
@@ -299,10 +346,13 @@ def getNFTByTokenId(tokenType, tokenId):
     print('about to get tokenUri for tokenId:' + str(tokenId))
     # get tokenUri
     tokenUri = ""
+    address = ""
     if tokenType == "ERC721":
         tokenUri = emperorContract_instance.functions.tokenURI(tokenId).call()
+        address = config.emperorContractAddress 
     else:
         tokenUri = emperorFusionContract_instance.functions.uri(tokenId).call()
+        address = config.emperorFusionContractAddress
 
     print(tokenUri)
     # get metadata from pinata
@@ -310,16 +360,36 @@ def getNFTByTokenId(tokenType, tokenId):
                                                      'ipfs.digi96.com')).content)
     print(jsonR, file=sys.stdout)
 
+    print('traits:' + str(jsonR['traits']))
+
     nft = NFT(tokenType, tokenId, jsonR['name'], jsonR['image'].replace('gateway.pinata.cloud',
-                                                                        'ipfs.digi96.com'), jsonR['description'])
+                                                                        'ipfs.digi96.com'), jsonR['description'], address, jsonR['traits'])
+
+    print('address:'+ nft.address)
     return nft
 
 
-def mintNFT(metadataUri):
+def mintNFT(amount, metadataUri):
     contract_owner_address = config.contractOwnerAddress
     nonce = w3.eth.get_transaction_count(contract_owner_address)
 
-    emperor_txn = emperorContract_instance.functions.mintNFT(contract_owner_address,
+    mint_txn = None
+
+    print('mint amount:' + str(amount))
+
+    if amount==1:
+        print('mint ERC721')
+        mint_txn = emperorContract_instance.functions.mintNFT(contract_owner_address,
+                                                             metadataUri).buildTransaction({
+                                                                 'chainId': 80001,
+                                                                 'gas': 10000000,
+                                                                 'maxFeePerGas': w3.toWei('2', 'gwei'),
+                                                                 'maxPriorityFeePerGas': w3.toWei('1', 'gwei'),
+                                                                 'nonce': nonce,
+                                                             })
+    else:
+        print('mint ERC1155')
+        mint_txn = emperorFusionContract_instance.functions.mintNFT(contract_owner_address, amount,
                                                              metadataUri).buildTransaction({
                                                                  'chainId': 80001,
                                                                  'gas': 10000000,
@@ -330,7 +400,7 @@ def mintNFT(metadataUri):
 
     private_key = config.privateKey
     signed_txn = w3.eth.account.sign_transaction(
-        emperor_txn, private_key=private_key)
+        mint_txn, private_key=private_key)
     tx_hash = w3.eth.send_raw_transaction(signed_txn.rawTransaction)
     print(tx_hash, file=sys.stdout)
     #tx_receipt = w3.eth.wait_for_transaction_receipt(tx_hash)
@@ -354,3 +424,12 @@ def getTransactionReceipt(txHash):
         print(type(e))
         print('Unknow error', e)
         return None
+
+def getERC115TokenBalance(tokenId):
+    try:
+        tokenBalance = emperorFusionContract_instance.functions.balanceOf(config.contractOwnerAddress, tokenId).call()
+        return tokenBalance
+
+    except Exception as e:
+        print(e)
+        return 0

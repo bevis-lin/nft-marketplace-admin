@@ -14,14 +14,29 @@
     {% for listing in listings %}
     <div class="card">
       <img src="{{ listing['nft'].imageUrl }}" class="card-img-top">
+      
       <div class="card-body">
+        
         <h5 class="card-title">{{ listing['nft'].name }}</h5>
-        <p class="card-text">Listing Id: {{ listing['listingId'] }}</p>
-        <p class="card-text">Token Id: {{ listing['tokenId'] }}</p>
-        <p class="card-text">Price: {{ listing['price'] }}</p>
-        <p class="card-text">Listing Type: {{ listing['listingType'] }}</p>
         <p class="card-text text-truncate">{{ listing['nft'].description }}</p>
-        <a href="/nft/{{ listing.tokenId }}?listingId={{ listing['listingId']}}" class="card-link">More</a>
+        
+        <ul class="list-group list-group-flush">
+          <li class="list-group-item">{{ listing['price'] }} ETH</li>
+          <li class="list-group-item">Market:  
+            {% if listing['listingType'] == 0 %}
+              一級
+            {% endif %}
+            {% if listing['listingType'] == 1 %}
+              二級
+            {% endif %}
+          </li>
+          <li class="list-group-item">Token Standard:  <a href="https://mumbai.polygonscan.com/address/{{ listing['nft'].address }}"><b>{{ listing['nft'].tokenType }}</b></a></li>
+          <li class="list-group-item">Token ID:  <a href="#">{{ listing['tokenId'] }}</a></li>
+        </ul>
+        <div class="card-body">
+          <a href="/nft/{{ listing['nft'].tokenType }}/{{ listing.tokenId }}?listingId={{ listing['listingId']}}" class="card-link">More</a>
+        </div>
+        
       </div>
     </div>
     {% endfor %}
