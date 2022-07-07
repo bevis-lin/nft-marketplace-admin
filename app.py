@@ -242,6 +242,14 @@ def displayNFT(tokenType, tokenId):
         tokenBalance = 1
         if tokenType == 'ERC1155':
             tokenBalance = web3Interact.getERC115TokenBalance(tokenId)
+        
+        try:
+            db.session.execute("SELECT 1;")
+            db.session.commit()
+        except:
+            db.session.rollback()
+        finally:
+            db.session.close()
 
         payments = Payment.query.order_by(Payment.date_created).all()
         args = request.args

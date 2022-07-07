@@ -48,8 +48,7 @@ def getListings():
 
     # get all nft in this contract from alchemy
     nfts = getOwnedNFTs(config.marketContractAddress)
-    print(nfts[1].tokenType)
-
+    
     for listing in listings:
         vals = {}
         vals['listingId'] = listing[0]
@@ -81,12 +80,12 @@ def getListings():
 
 def getListingById(id):
     listings = marketplaceContract_instance.functions.getUnsoldListings().call()
-    print(listings, file=sys.stderr)
+    #print(listings, file=sys.stderr)
     listingResult = None
 
     # get all nft in this contract from alchemy
     nfts = getOwnedNFTs(config.marketContractAddress)
-    print(nfts[1].tokenType)
+    #print(nfts[1].tokenType)
 
     for listing in listings:
         if listing[0] == int(id):
@@ -113,7 +112,7 @@ def getListingById(id):
             listingResult['listingType'] = listing[6]
             break
     
-    print(listingResult)
+    #print(listingResult)
 
     return listingResult
 
@@ -318,9 +317,9 @@ def getOwnedNFTs(ownerAddress):
     urlGet = config.web3HttpProvider + '/getNFTs/?owner='+ownerAddress +\
         '&contractAddresses[]=' + config.emperorContractAddress + "&contractAddresses[]=" +\
         config.emperorFusionContractAddress
-    print(urlGet, file=sys.stdout)
+    #print(urlGet, file=sys.stdout)
     contentResult = json.loads(requests.get(urlGet).content)
-    print(contentResult, file=sys.stdout)
+    #print(contentResult, file=sys.stdout)
 
     nftsReturn = []
     for nftTemp in contentResult['ownedNfts']:
@@ -343,7 +342,6 @@ def getOwnedNFTs(ownerAddress):
 
 
 def getNFTByTokenId(tokenType, tokenId):
-    print('about to get tokenUri for tokenId:' + str(tokenId))
     # get tokenUri
     tokenUri = ""
     address = ""
@@ -354,18 +352,11 @@ def getNFTByTokenId(tokenType, tokenId):
         tokenUri = emperorFusionContract_instance.functions.uri(tokenId).call()
         address = config.emperorFusionContractAddress
 
-    print(tokenUri)
     # get metadata from pinata
     jsonR = json.loads(requests.get(tokenUri.replace('gateway.pinata.cloud',
                                                      'ipfs.digi96.com')).content)
-    print(jsonR, file=sys.stdout)
-
-    print('traits:' + str(jsonR['traits']))
-
     nft = NFT(tokenType, tokenId, jsonR['name'], jsonR['image'].replace('gateway.pinata.cloud',
                                                                         'ipfs.digi96.com'), jsonR['description'], address, jsonR['traits'])
-
-    print('address:'+ nft.address)
     return nft
 
 
