@@ -424,3 +424,29 @@ def getERC115TokenBalance(tokenId):
     except Exception as e:
         print(e)
         return 0
+
+def delistListing(listingId):
+    try:
+        contract_owner_address = config.contractOwnerAddress
+        nonce = w3.eth.get_transaction_count(contract_owner_address)
+        
+        
+        marketplace_txn = marketplaceContract_instance.functions.deListing(listingId).buildTransaction({
+                'chainId': 80001,
+                'gas': 10000000,
+                'maxFeePerGas': w3.toWei('2', 'gwei'),
+                'maxPriorityFeePerGas': w3.toWei('1', 'gwei'),
+                'nonce': nonce,
+            })
+
+        private_key = config.privateKey
+        signed_txn = w3.eth.account.sign_transaction(
+            marketplace_txn, private_key=private_key)
+        tx_hash = w3.eth.send_raw_transaction(signed_txn.rawTransaction)
+        print(tx_hash, file=sys.stdout)
+        
+        return w3.toHex(w3.keccak(signed_txn.rawTransaction))
+
+    except Exception as e:
+        print(e, file=sys.stderr)
+        raise e

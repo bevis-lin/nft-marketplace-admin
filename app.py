@@ -96,6 +96,20 @@ def update(id):
     else:
         return render_template('update.html', task=task)
 
+@app.route('/listings/delisting', methods=['POST'])
+def delisting():
+    listingId = request.form['listingId']
+    print('deleting list id:', listingId)
+    try:
+        txHash = web3Interact.delistListing(int(listingId))
+        print(txHash)
+        return redirect(url_for('getTransactionStatus', txHash=txHash))
+    except Exception as e:
+        return jsonify({
+                "status": "failed",
+                "data": None,
+                "message": str(e)
+        })
 
 @app.route('/listings', methods=['GET', 'POST'])
 def listings():
@@ -118,7 +132,7 @@ def listings():
                 "status": "failed",
                 "data": None,
                 "message": str(e)
-            })
+            }) 
 
 
 @app.route('/listings/<int:listingId>/purchase', methods=['GET'])

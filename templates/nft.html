@@ -55,6 +55,13 @@
                   <button type="submit" class="btn btn-primary">Submit</button>                
                 </form>
               </div>
+            {% else %}
+              <div class="container">
+                <form action="/listings/delisting" method="POST">
+                  <input type="hidden" name="listingId" value="{{ listing.listingId }}">
+                  <button type="submit" class="btn btn-primary">Delisting</button>
+                </form>
+              </div>
             {% endif %}
         </div>
       </div>
